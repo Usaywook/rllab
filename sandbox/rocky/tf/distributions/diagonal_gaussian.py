@@ -1,10 +1,7 @@
-
-
-
 import tensorflow as tf
 import numpy as np
 from sandbox.rocky.tf.distributions.base import Distribution
-
+import pdb
 
 class DiagonalGaussian(Distribution):
     def __init__(self, dim):
@@ -77,15 +74,22 @@ class DiagonalGaussian(Distribution):
     def sample(self, dist_info):
         means = dist_info["mean"]
         log_stds = dist_info["log_std"]
-        rnd = np.random.normal(size=means.shape)
-        return rnd * np.exp(log_stds) + means
+        # print('means={}'.format(means.shape))
+        # rnd = np.random.normal(size=means.shape)
+        # return rnd * np.exp(log_stds) + means
+        rnd = tf.truncated_normal(shape=tf.shape(means))
+        return rnd * tf.exp(log_stds) + means
 
     def log_likelihood(self, xs, dist_info):
         means = dist_info["mean"]
         log_stds = dist_info["log_std"]
-        zs = (xs - means) / np.exp(log_stds)
-        return - np.sum(log_stds, axis=-1) - \
-               0.5 * np.sum(np.square(zs), axis=-1) - \
+        # zs = (xs - means) / np.exp(log_stds)
+        # return - np.sum(log_stds, axis=-1) - \
+        #        0.5 * np.sum(np.square(zs), axis=-1) - \
+        #        0.5 * self.dim * np.log(2 * np.pi)
+        zs = (xs - means) / tf.exp(log_stds)
+        return - tf.reduce_sum(log_stds, axis=-1, keep_dims=True) - \
+               0.5 * tf.reduce_sum(tf.square(zs), axis=-1, keep_dims=True) - \
                0.5 * self.dim * np.log(2 * np.pi)
 
     def entropy(self, dist_info):

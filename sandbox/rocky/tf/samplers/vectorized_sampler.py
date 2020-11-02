@@ -1,5 +1,4 @@
 import pickle
-
 import tensorflow as tf
 from rllab.sampler.base import BaseSampler
 from sandbox.rocky.tf.envs.parallel_vec_env_executor import ParallelVecEnvExecutor

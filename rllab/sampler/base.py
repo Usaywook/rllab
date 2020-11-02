@@ -45,10 +45,10 @@ class BaseSampler(Sampler):
         """
         self.algo = algo
 
-    def process_samples(self, itr, paths):
+    def process_samples(self, itr, paths,irl=False):
+
         baselines = []
         returns = []
-
         if hasattr(self.algo.baseline, "predict_n"):
             all_path_baselines = self.algo.baseline.predict_n(paths)
         else:
@@ -72,6 +72,8 @@ class BaseSampler(Sampler):
 
         if not self.algo.policy.recurrent:
             observations = tensor_utils.concat_tensor_list([path["observations"] for path in paths])
+            if irl:
+                observations_next = tensor_utils.concat_tensor_list([path["observations_next"] for path in paths])
             actions = tensor_utils.concat_tensor_list([path["actions"] for path in paths])
             rewards = tensor_utils.concat_tensor_list([path["rewards"] for path in paths])
             returns = tensor_utils.concat_tensor_list([path["returns"] for path in paths])
@@ -92,7 +94,19 @@ class BaseSampler(Sampler):
 
             ent = np.mean(self.algo.policy.distribution.entropy(agent_infos))
 
-            samples_data = dict(
+            if irl:
+                samples_data = dict(
+                observations=observations,
+                observations_next=observations_next,
+                actions=actions,
+                rewards=rewards,
+                returns=returns,
+                advantages=advantages,
+                env_infos=env_infos,
+                agent_infos=agent_infos,
+                paths=paths,)
+            else:
+                samples_data = dict(
                 observations=observations,
                 actions=actions,
                 rewards=rewards,
@@ -100,14 +114,18 @@ class BaseSampler(Sampler):
                 advantages=advantages,
                 env_infos=env_infos,
                 agent_infos=agent_infos,
-                paths=paths,
-            )
+                paths=paths,)
+
         else:
+
             max_path_length = max([len(path["advantages"]) for path in paths])
 
             # make all paths the same length (pad extra advantages with 0)
             obs = [path["observations"] for path in paths]
             obs = tensor_utils.pad_tensor_n(obs, max_path_length)
+
+            obs_next = [path["observations_next"] for path in paths]
+            obs_next = tensor_utils.pad_tensor_n(obs_next, max_path_length)
 
             if self.algo.center_adv:
                 raw_adv = np.concatenate([path["advantages"] for path in paths])
@@ -148,17 +166,28 @@ class BaseSampler(Sampler):
 
             ent = np.sum(self.algo.policy.distribution.entropy(agent_infos) * valids) / np.sum(valids)
 
-            samples_data = dict(
-                observations=obs,
+            if irl:
+                samples_data = dict(
+                observations=observations,
+                observations_next=observations_next,
                 actions=actions,
-                advantages=adv,
                 rewards=rewards,
                 returns=returns,
-                valids=valids,
-                agent_infos=agent_infos,
+                advantages=advantages,
                 env_infos=env_infos,
-                paths=paths,
-            )
+                agent_infos=agent_infos,
+                paths=paths,)
+            else:
+                samples_data = dict(
+                observations=observations,
+                actions=actions,
+                rewards=rewards,
+                returns=returns,
+                advantages=advantages,
+                env_infos=env_infos,
+                agent_infos=agent_infos,
+                paths=paths,)
+
 
         logger.log("fitting baseline...")
         if hasattr(self.algo.baseline, 'fit_with_samples'):

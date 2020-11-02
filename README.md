@@ -48,3 +48,60 @@ rllab was originally developed by Rocky Duan (UC Berkeley / OpenAI), Peter Chen 
 # Slides
 
 Slides presented at ICML 2016: https://www.dropbox.com/s/rqtpp1jv2jtzxeg/ICML2016_benchmarking_slides.pdf?dl=0
+
+# install
+```
+export PYTHONPATH=/media/usaywook/rllab/:$PYTHONPATH
+```
+
+## sources.list 추가에러
+
+```
+sudo apt-get build-dep python-pygame
+```
+에서 아래와 같은 에러 발생
+```
+E: You must put some 'source' URIs in your sources.list
+```
+아래 명령에서 source.list deb-src 있는 부분 전부 주석해제
+```
+sudo vi /etc/apt/sources.list
+sudo apt-get update
+```
+다시 source.list deb-src 있는 부분 전부 주석
+
+## in environment.yml
+
+python==3.5.2 -> python==3.5.*
+
+https://storage.googleapis.com/tensorflow/linux/gpu/tensorflow_gpu-1.0.1-cp35-cp35m-linux_x86_64.whl; 'linux' in sys_platform 
+-> https://storage.googleapis.com/tensorflow/linux/gpu/tensorflow_gpu-1.2.0-cp35-cp35m-linux_x86_64.whl; 'linux' in sys_platform 
+
+./script/setup_linux.sh
+./script/setup_mujoco.sh
+
+/home/usaywook/.mujoco/mjpro131/bin
+/home/usaywook/.mujoco/mjkey.txt
+
+## import tensorflow
+ImportError: libcudart.so.8.0: cannot open shared object file: No such file or directory
+https://developer.nvidia.com/cuda-80-ga2-download-archive 설치 후
+```
+sudo apt-get install cuda-8.0
+vi ~/.bashrc
+export PATH=/usr/local/cuda-8.0/bin${PATH:+:${PATH}}
+export LD_LIBRARY_PATH=/usr/local/cuda-8.0/lib64\${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+source ~/.bashrc
+nvcc --version
+```
+Couldn't open CUDA library libcudnn.so.5.
+https://developer.nvidia.com/rdp/cudnn-archive 에서 로그인 하고 cuDNN v5.1 Library for Linux 설치
+```
+cd <다운로드 경로>
+sudo tar -xzvf cudnn-8.0-linux-x64-v5.1.tgz
+cd cuda
+sudo cp include/cudnn.h /usr/local/cuda-8.0/include
+sudo cp lib64/libcudnn* /usr/local/cuda-8.0/lib64
+sudo chmod a+r /usr/local/cuda-8.0/lib64/libcudnn*
+cat /usr/local/cuda/include/cudnn.h | grep CUDNN_MAJOR -A 2
+```
